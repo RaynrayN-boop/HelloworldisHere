@@ -1,0 +1,148 @@
+local player = game.Players.LocalPlayer
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+-- Create the UI
+local screenGui = Instance.new("ScreenGui")
+screenGui.Parent = player.PlayerGui
+
+-- Create the main frame (Big square UI) with draggable and scrollable properties
+local mainFrame = Instance.new("Frame")
+mainFrame.Size = UDim2.new(0, 300, 0, 400)
+mainFrame.Position = UDim2.new(0.5, -150, 0.5, -200)
+mainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+mainFrame.BorderSizePixel = 0
+mainFrame.Parent = screenGui
+
+-- Add scrolling functionality (wrap the UI content in a ScrollFrame)
+local scrollFrame = Instance.new("ScrollingFrame")
+scrollFrame.Size = UDim2.new(1, 0, 1, -50)
+scrollFrame.Position = UDim2.new(0, 0, 0, 50)
+scrollFrame.CanvasSize = UDim2.new(0, 0, 0, 1000) -- Enough space for scrolling
+scrollFrame.ScrollBarThickness = 6
+scrollFrame.BackgroundTransparency = 1
+scrollFrame.Parent = mainFrame
+
+-- Title label for UI
+local titleLabel = Instance.new("TextLabel")
+titleLabel.Size = UDim2.new(1, 0, 0, 40)
+titleLabel.Text = "Options"
+titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+titleLabel.TextSize = 24
+titleLabel.BackgroundTransparency = 1
+titleLabel.Parent = mainFrame
+
+-- Create draggable functionality
+local dragging = false
+local dragInput
+local dragStart
+local startPos
+mainFrame.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = true
+        dragStart = input.Position
+        startPos = mainFrame.Position
+        input.Changed:Connect(function()
+            if not input.UserInputState == Enum.UserInputState.Change then return end
+            if dragging then
+                local delta = input.Position - dragStart
+                mainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+            end
+        end)
+    end
+end)
+
+mainFrame.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = false
+    end
+end)
+
+-- Table to store button options and their labels
+local buttonData = {
+    {name = "Instinct ON/OFF", yPos = 50, action = function(status) print("Instinct is " .. status) end, showToggleButton = true},
+    {name = "Server Hop ON/OFF", yPos = 100, action = function(status) print("Server Hop is " .. status) end, showToggleButton = true},
+    {name = "Server Hop Instinct", yPos = 150, action = function(status) print("Server Hop Instinct is " .. status) end, showToggleButton = true},
+    {name = "Set Coordinate", yPos = 200, action = function(status) print("Set Coordinate button pressed") end, showToggleButton = true},
+}
+
+-- Create toggle button function
+local function createToggleButton(data)
+    local frame = Instance.new("Frame")
+    frame.Size = UDim2.new(1, 0, 0, 40)
+    frame.Position = UDim2.new(0, 0, 0, data.yPos)
+    frame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+    frame.BorderSizePixel = 0
+    frame.Parent = scrollFrame
+
+    local textLabel = Instance.new("TextLabel")
+    textLabel.Size = UDim2.new(0.7, 0, 1, 0)
+    textLabel.Position = UDim2.new(0, 10, 0, 0)
+    textLabel.Text = data.name
+    textLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    textLabel.TextSize = 18
+    textLabel.BackgroundTransparency = 1
+    textLabel.Parent = frame
+
+    if data.showToggleButton then
+        local toggleButton = Instance.new("TextButton")
+        toggleButton.Size = UDim2.new(0, 50, 0, 30)
+        toggleButton.Position = UDim2.new(1, -60, 0, 5)
+        toggleButton.Text = "OFF"
+        toggleButton.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+        toggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+        toggleButton.Parent = frame
+
+        toggleButton.MouseButton1Click:Connect(function()
+            toggleButton.Text = (toggleButton.Text == "OFF") and "ON" or "OFF"
+            toggleButton.BackgroundColor3 = (toggleButton.Text == "ON") and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 0, 0)
+            data.action(toggleButton.Text)
+
+            -- If "ON", run in loop
+            if toggleButton.Text == "ON" then
+                while toggleButton.Text == "ON" do
+                    wait(1) -- Wait 1 second (or adjust the timing)
+                    data.action("Running in Loop")
+                end
+            end
+        end)
+    end
+end
+
+-- Create all toggle buttons from buttonData table
+for _, data in ipairs(buttonData) do
+    createToggleButton(data)
+end
+
+-- --- Hide/Show UI Button ---
+local hideButton = Instance.new("TextButton")
+hideButton.Size = UDim2.new(0, 100, 0, 40)
+hideButton.Position = UDim2.new(0.5, -50, 0, 0) -- Positioned at the top center
+hideButton.Text = "Hide UI"
+hideButton.BackgroundColor3 = Color3.fromRGB(255, 165, 0)
+hideButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+hideButton.TextSize = 18
+hideButton.Parent = screenGui
+
+-- Function to toggle visibility of the main UI
+local function toggleMainUI()
+    mainFrame.Visible = not mainFrame.Visible
+    hideButton.Text = mainFrame.Visible and "Hide UI" or "Show UI"
+end
+
+-- Hide UI button click event
+hideButton.MouseButton1Click:Connect(toggleMainUI)
+
+-- --- Cross/Close Button ---
+local closeButton = Instance.new("TextButton")
+closeButton.Size = UDim2.new(0, 30, 0, 30)
+closeButton.Position = UDim2.new(1, -40, 0, 10)  -- Top-right corner
+closeButton.Text = "X"
+closeButton.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+closeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+closeButton.TextSize = 20
+closeButton.Parent = mainFrame
+
+-- Close button click event (destroys the UI)
+closeButton.MouseButton1Click:Connect(function()
+    screenGui:Destroy()  -- Destroys the entire UI
+end)
