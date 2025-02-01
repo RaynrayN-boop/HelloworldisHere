@@ -1,0 +1,18 @@
+local HttpService = game:GetService("HttpService")
+local TeleportService = game:GetService("TeleportService")
+local PlaceId = game.PlaceId  -- Gets the current game place ID
+
+function hopServer()
+    local servers = HttpService:JSONDecode(game:HttpGet("https://games.roblox.com/v1/games/"..PlaceId.."/servers/Public?sortOrder=Asc&limit=100"))
+    for _, server in pairs(servers.data) do
+        if server.playing < server.maxPlayers then
+            TeleportService:TeleportToPlaceInstance(PlaceId, server.id, game.Players.LocalPlayer)
+            break
+        end
+    end
+end
+
+while true do
+    wait(120)  -- Waits for 2 minutes
+    hopServer()
+end
