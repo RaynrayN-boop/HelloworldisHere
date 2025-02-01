@@ -13,6 +13,6 @@ function hopServer()
 end
 
 while true do
-    wait(120)  -- Waits for 2 minutes
+    wait(0)  -- Waits for 2 minutes
     hopServer()
 end
